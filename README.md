@@ -53,13 +53,13 @@ Couverture de 100 km autour de 46,0° N 6,0° E (145 MHz, mât de 30 m, RX 2 m, 
 - **Point-to-point:** values differ at about 10⁻¹³ relative.
 - **Cause:** the trigonometric functions of the WebAssembly runtime do not always round the last bit exactly like the native system library.
 
-**Temps** (machine de 20 threads) :
+**Temps** (machine de 20 threads au repos, meilleur de 3 essais) :
 
 | Calcul | Exact | `fast: 50` |
 |---|---:|---:|
-| RustITM natif, 1 thread | 12,3 s | 4,3 s |
-| wasm, 1 worker (Node) | 16,8 s | 7,4 s |
-| RustITM natif, 20 threads | 0,75 s | 0,29 s |
+| RustITM natif, 1 thread | 12,4 s | 4,3 s |
+| wasm, 1 worker (Node) | 16,7 s | 7,3 s |
+| RustITM natif, 20 threads | 0,76 s | 0,28 s |
 | Chromium, 20 workers (`?workers=20`) | 1,4 s | 0,9 s |
 | Chromium, 8 workers (défaut) | 2,5 s | 1,3 s |
 
