@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 cargo build --release --target wasm32-unknown-unknown -p itm-wasm
 rm -rf web/pkg
 wasm-bindgen --target web --no-typescript --out-dir web/pkg \
-  target/wasm32-unknown-unknown/release/itm_wasm.wasm
+  "${CARGO_TARGET_DIR:-target}/wasm32-unknown-unknown/release/itm_wasm.wasm"
 if command -v wasm-opt >/dev/null; then
   wasm-opt -O3 --enable-bulk-memory --enable-nontrapping-float-to-int \
     web/pkg/itm_wasm_bg.wasm -o web/pkg/itm_wasm_bg.wasm
