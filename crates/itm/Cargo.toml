@@ -1,0 +1,8 @@
+[package]
+name = "itm"
+version = "0.2.0"
+edition = "2021"
+description = "Portage Rust pur du modèle ITM (Longley-Rice) de la NTIA, mode point à point"
+license = "AGPL-3.0-only"
+
+[dependencies]

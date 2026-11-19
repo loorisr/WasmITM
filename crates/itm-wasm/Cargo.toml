@@ -1,0 +1,16 @@
+[package]
+name = "itm-wasm"
+version = "0.1.0"
+edition = "2021"
+description = "ITM (Longley-Rice) + Copernicus GLO-90 dans le navigateur (WebAssembly)"
+license = "AGPL-3.0-only"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+itm = { path = "../itm" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tiff = "0.11.3"
+wasm-bindgen = "=0.2.129"
