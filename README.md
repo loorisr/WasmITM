@@ -1,4 +1,4 @@
-# WebAsmITM
+# WasmITM
 
 Calcul de propagation radio **ITM (Longley-Rice) v1.3** sur le MNE **Copernicus GLO-90**,
 entièrement dans le navigateur (WebAssembly), sans serveur : un site statique déployable sur
@@ -96,10 +96,10 @@ node scripts/node_run.mjs <tuiles> p2p requete.json sortie.json
 
 Le workflow `.github/workflows/pages.yml` lance les tests, compile le wasm et publie le dossier
 `web/` à chaque push sur `main`. Pour l'activer :
-1. créer le dépôt GitHub et y pousser `main` ;
+1. pousser `main` sur GitHub ;
 2. ouvrir *Settings → Pages → Build and deployment → Source* et choisir *GitHub Actions*.
 
-Le site est alors servi à `https://<utilisateur>.github.io/WebAsmITM/`. Tous les chemins sont
+Le site est alors servi à `https://loorisr.github.io/WasmITM/`. Tous les chemins sont
 relatifs, donc il fonctionne aussi bien à la racine d'un domaine que dans un sous-dossier.
 
 ## Licence et données
