@@ -131,23 +131,23 @@ impl ItmError {
     pub fn message(self) -> &'static str {
         use ItmError::*;
         match self {
-            TxTerminalHeight => "hauteur TX hors limites (0.5..3000 m)",
-            RxTerminalHeight => "hauteur RX hors limites (0.5..3000 m)",
-            InvalidRadioClimate => "climat radio invalide (1..7)",
-            InvalidTime => "pourcentage de temps hors limites (0..100 exclus)",
-            InvalidLocation => "pourcentage de lieux hors limites (0..100 exclus)",
-            InvalidSituation => "pourcentage de situations hors limites (0..100 exclus)",
-            Refractivity => "réfractivité N0 hors limites (250..400)",
-            Frequency => "fréquence hors limites (20..20000 MHz)",
-            Polarization => "polarisation invalide",
-            Epsilon => "permittivité relative < 1",
-            Sigma => "conductivité <= 0",
-            GroundImpedance => "impédance du sol invalide",
-            Mdvar => "mode de variabilité invalide",
-            EffectiveEarth => "rayon terrestre effectif invalide",
-            PathDistance => "profil de terrain invalide (au moins 2 points et distance > 0)",
-            SurfaceRefractivitySmall => "réfractivité de surface calculée trop faible",
-            SurfaceRefractivityLarge => "réfractivité de surface calculée trop forte",
+            TxTerminalHeight => "TX height out of range (0.5..3000 m)",
+            RxTerminalHeight => "RX height out of range (0.5..3000 m)",
+            InvalidRadioClimate => "invalid radio climate (1..7)",
+            InvalidTime => "time percentage out of range (0..100, exclusive)",
+            InvalidLocation => "location percentage out of range (0..100, exclusive)",
+            InvalidSituation => "situation percentage out of range (0..100, exclusive)",
+            Refractivity => "refractivity N0 out of range (250..400)",
+            Frequency => "frequency out of range (20..20000 MHz)",
+            Polarization => "invalid polarization",
+            Epsilon => "relative permittivity < 1",
+            Sigma => "conductivity <= 0",
+            GroundImpedance => "invalid ground impedance",
+            Mdvar => "invalid variability mode",
+            EffectiveEarth => "invalid effective earth radius",
+            PathDistance => "invalid terrain profile (at least 2 points and distance > 0)",
+            SurfaceRefractivitySmall => "computed surface refractivity too small",
+            SurfaceRefractivityLarge => "computed surface refractivity too large",
         }
     }
 }
@@ -194,61 +194,58 @@ impl Warnings {
         const ALL: [(u32, &str); 15] = [
             (
                 Warnings::TX_TERMINAL_HEIGHT,
-                "hauteur TX proche des limites",
+                "TX height close to the limits",
             ),
             (
                 Warnings::RX_TERMINAL_HEIGHT,
-                "hauteur RX proche des limites",
+                "RX height close to the limits",
             ),
             (
                 Warnings::FREQUENCY,
-                "fréquence proche des limites (40..10000 MHz)",
+                "frequency close to the limits (40..10000 MHz)",
             ),
             (Warnings::PATH_DISTANCE_TOO_BIG_1, "distance > 1000 km"),
             (
                 Warnings::PATH_DISTANCE_TOO_BIG_2,
-                "distance > 2000 km, résultat peu fiable",
+                "distance > 2000 km, unreliable result",
             ),
             (
                 Warnings::PATH_DISTANCE_TOO_SMALL_1,
-                "distance proche de la limite basse",
+                "distance close to the lower limit",
             ),
             (
                 Warnings::PATH_DISTANCE_TOO_SMALL_2,
-                "distance < 1 km, résultat peu fiable",
+                "distance < 1 km, unreliable result",
             ),
             (
                 Warnings::TX_HORIZON_ANGLE,
-                "angle d'horizon TX élevé (> 200 mrad)",
+                "high TX horizon angle (> 200 mrad)",
             ),
             (
                 Warnings::RX_HORIZON_ANGLE,
-                "angle d'horizon RX élevé (> 200 mrad)",
+                "high RX horizon angle (> 200 mrad)",
             ),
             (
                 Warnings::TX_HORIZON_DISTANCE_1,
-                "horizon TX < 1/10 de l'horizon terre lisse",
+                "TX horizon < 1/10 of the smooth-earth horizon",
             ),
             (
                 Warnings::RX_HORIZON_DISTANCE_1,
-                "horizon RX < 1/10 de l'horizon terre lisse",
+                "RX horizon < 1/10 of the smooth-earth horizon",
             ),
             (
                 Warnings::TX_HORIZON_DISTANCE_2,
-                "horizon TX > 3x l'horizon terre lisse",
+                "TX horizon > 3x the smooth-earth horizon",
             ),
             (
                 Warnings::RX_HORIZON_DISTANCE_2,
-                "horizon RX > 3x l'horizon terre lisse",
+                "RX horizon > 3x the smooth-earth horizon",
             ),
             (
                 Warnings::EXTREME_VARIABILITIES,
-                "variabilités extrêmes demandées",
+                "extreme variabilities requested",
             ),
-            (
-                Warnings::SURFACE_REFRACTIVITY,
-                "réfractivité de surface faible",
-            ),
+            (Warnings::SURFACE_REFRACTIVITY, "low surface refractivity"),
         ];
         ALL.iter()
             .filter(|(b, _)| self.0 & b != 0)

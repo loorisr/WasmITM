@@ -103,7 +103,7 @@ impl ItmInput {
         let climate = self
             .climate
             .to_itm()
-            .ok_or_else(|| AppError::bad_request("climat invalide (1..7 ou nom)"))?;
+            .ok_or_else(|| AppError::bad_request("invalid climate (1..7 or name)"))?;
         let p = itm::P2pParams {
             h_tx_m: h_tx,
             h_rx_m: h_rx,

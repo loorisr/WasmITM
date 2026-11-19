@@ -42,6 +42,6 @@ impl From<itm::ItmError> for AppError {
 
 impl From<serde_json::Error> for AppError {
     fn from(e: serde_json::Error) -> Self {
-        Self::bad_request(format!("requête JSON invalide : {e}"))
+        Self::bad_request(format!("invalid JSON request: {e}"))
     }
 }

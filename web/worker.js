@@ -55,7 +55,7 @@ self.onmessage = async ({ data: m }) => {
         result = { values, calls, errors };
         break;
       }
-      default: throw new Error(`opération inconnue : ${m.op}`);
+      default: throw new Error(`unknown operation: ${m.op}`);
     }
     self.postMessage({ id: m.id, ok: true, result }, transferables(result));
   } catch (e) {

@@ -97,7 +97,7 @@ fn clean(v: f32) -> f64 {
 
 /// Décode une tuile GeoTIFF (COG ou non) en mémoire.
 pub fn read_geotiff_bytes(bytes: &[u8]) -> Result<Tile, String> {
-    read_geotiff_inner(bytes).map_err(|e| format!("décodage GeoTIFF : {e}"))
+    read_geotiff_inner(bytes).map_err(|e| format!("GeoTIFF decoding: {e}"))
 }
 
 fn read_geotiff_inner(bytes: &[u8]) -> Result<Tile, Box<dyn std::error::Error>> {
@@ -106,7 +106,7 @@ fn read_geotiff_inner(bytes: &[u8]) -> Result<Tile, Box<dyn std::error::Error>> 
     let scale = dec.get_tag_f64_vec(Tag::ModelPixelScaleTag)?;
     let tie = dec.get_tag_f64_vec(Tag::ModelTiepointTag)?;
     if scale.len() < 2 || tie.len() < 6 {
-        return Err("géoréférencement GeoTIFF invalide".into());
+        return Err("invalid GeoTIFF georeferencing".into());
     }
     let mut pixel_is_point = false;
     if let Ok(keys) = dec.get_tag_u16_vec(Tag::GeoKeyDirectoryTag) {
@@ -136,10 +136,10 @@ fn read_geotiff_inner(bytes: &[u8]) -> Result<Tile, Box<dyn std::error::Error>> 
         DecodingResult::I16(v) => v.into_iter().map(|x| x as f32).collect(),
         DecodingResult::U16(v) => v.into_iter().map(|x| x as f32).collect(),
         DecodingResult::I32(v) => v.into_iter().map(|x| x as f32).collect(),
-        _ => return Err("type de pixel non supporté".into()),
+        _ => return Err("unsupported pixel type".into()),
     };
     if data.len() != (w as usize) * (h as usize) {
-        return Err("taille de données inattendue (bandes multiples ?)".into());
+        return Err("unexpected data size (multiple bands?)".into());
     }
     if let Some(nd) = nodata {
         for v in data.iter_mut() {

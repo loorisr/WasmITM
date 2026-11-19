@@ -9,7 +9,7 @@ WasmITM is the browser port of [RustITM](https://github.com/loorisr/RustITM) (fr
 `c3e7496`):
 - the ITM model (`crates/itm`) is copied unchanged;
 - the computation part of the RustITM server (DEM, profiles, coverage, fast mode) is adapted in `crates/itm-wasm`;
-- the web UI is the same; it is in French.
+- the web UI is the same, translated into English.
 
 What it offers:
 - point-to-point links with a terrain profile;

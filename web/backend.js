@@ -20,7 +20,7 @@ class Worker1 {
       data.ok ? p.resolve(data.result) : p.reject(apiError(data.error));
     };
     this.w.onerror = e => {
-      const err = new Error(`worker : ${e.message || 'erreur'}`);
+      const err = new Error(`worker: ${e.message || 'error'}`);
       for (const p of this.pending.values()) p.reject(err);
       this.pending.clear();
     };
@@ -44,7 +44,7 @@ class Worker1 {
   }
   terminate() {
     this.w.terminate();
-    const err = new DOMException('Calcul annulé', 'AbortError');
+    const err = new DOMException('Computation cancelled', 'AbortError');
     for (const p of this.pending.values()) p.reject(err);
     this.pending.clear();
   }
@@ -101,7 +101,7 @@ async function withTiles(keysJson, workers, onProgress) {
   try {
     list = await getTiles(keys, onProgress);
   } catch (e) {
-    throw new ApiError(502, `accès MNE : ${e.message}`);
+    throw new ApiError(502, `DEM access: ${e.message}`);
   }
   await Promise.all(workers.map(w => w.tiles(list)));
 }
@@ -137,16 +137,16 @@ async function coverage(bodyStr, signal, onProgress) {
   delete req.format;
   const body = JSON.stringify(req);
   if (!['f32', 'geotiff'].includes(format)) {
-    throw new ApiError(400, `format « ${format} » non disponible dans la version navigateur (f32 ou geotiff)`);
+    throw new ApiError(400, `format "${format}" is not available in the browser version (f32 or geotiff)`);
   }
   let res = covCache.get(body);
   if (!res) {
-    if (covBusy) throw new ApiError(503, 'une couverture est déjà en cours de calcul');
+    if (covBusy) throw new ApiError(503, 'a coverage is already being computed');
     covBusy = true;
     const onAbort = () => resetPool();
     signal?.addEventListener('abort', onAbort);
     try {
-      if (signal?.aborted) throw new DOMException('Calcul annulé', 'AbortError');
+      if (signal?.aborted) throw new DOMException('Computation cancelled', 'AbortError');
       res = await computeCoverage(body, onProgress);
     } finally {
       signal?.removeEventListener('abort', onAbort);
@@ -232,7 +232,7 @@ export async function handle(path, opts = {}) {
       case 'POST /v1/coverage':
         return await coverage(readBody(opts), opts.signal, opts.onProgress);
       default:
-        return jsonResponse({ error: 'introuvable' }, 404);
+        return jsonResponse({ error: 'not found' }, 404);
     }
   } catch (e) {
     if (e?.name === 'AbortError') throw e;

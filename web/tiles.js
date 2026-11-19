@@ -34,17 +34,17 @@ async function load(name, onEvent) {
   try {
     r = await fetch(url);
   } catch (e) {
-    throw new Error(`téléchargement de ${name} impossible (${e.message})`);
+    throw new Error(`cannot download ${name} (${e.message})`);
   }
   if (r.status === 404 || r.status === 403) {
     await cache?.put(url, new Response('', { headers: { 'x-sea': '1' } }));
     return null;
   }
-  if (!r.ok) throw new Error(`téléchargement de ${name} : HTTP ${r.status}`);
+  if (!r.ok) throw new Error(`downloading ${name}: HTTP ${r.status}`);
   const buf = await r.arrayBuffer();
   const magic = new Uint8Array(buf, 0, 2);
   if (!((magic[0] === 0x49 && magic[1] === 0x49) || (magic[0] === 0x4d && magic[1] === 0x4d))) {
-    throw new Error(`${name} : fichier téléchargé invalide`);
+    throw new Error(`${name}: invalid downloaded file`);
   }
   await cache?.put(url, new Response(buf.slice(0), { headers: { 'content-type': 'image/tiff' } })).catch(() => { });
   return buf;

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ITM · Propagation radio (WebAssembly)</title>
+<title>WasmITM · Radio propagation</title>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='5' fill='%232563eb'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%232563eb' stroke-width='2' opacity='.6'/%3E%3Ccircle cx='16' cy='16' r='15' fill='none' stroke='%232563eb' stroke-width='2' opacity='.3'/%3E%3C/svg%3E">
@@ -18,157 +18,157 @@
 <aside id="sidebar">
   <nav id="tabs">
     <button data-tab="sites" class="active">Sites</button>
-    <button data-tab="link">Liaison</button>
-    <button data-tab="coverage">Couverture</button>
+    <button data-tab="link">Link</button>
+    <button data-tab="coverage">Coverage</button>
     <button data-tab="radio">Radio</button>
   </nav>
 
   <!-- ============ SITES ============ -->
   <section class="tab" id="tab-sites">
     <div class="row">
-      <button class="primary" id="btn-add-site">+ Ajouter un site</button>
+      <button class="primary" id="btn-add-site">+ Add a site</button>
     </div>
-    <p class="hint">Cliquez sur « Ajouter » puis sur la carte. Les marqueurs se déplacent par glisser-déposer.</p>
+    <p class="hint">Click “Add”, then on the map. Markers can be dragged.</p>
     <ul id="site-list" class="cards"></ul>
     <div class="row small">
-      <button id="btn-export-sites">Exporter (JSON)</button>
-      <label class="button">Importer<input type="file" id="file-import" accept="application/json,.json" hidden></label>
+      <button id="btn-export-sites">Export (JSON)</button>
+      <label class="button">Import<input type="file" id="file-import" accept="application/json,.json" hidden></label>
     </div>
   </section>
 
   <!-- ============ LIAISON ============ -->
   <section class="tab" id="tab-link" hidden>
-    <label>Émetteur</label>
+    <label>Transmitter</label>
     <select id="link-tx"></select>
-    <label>Récepteur</label>
+    <label>Receiver</label>
     <div class="seg" id="link-rx-mode">
-      <button data-v="point" class="active">Point sur la carte</button>
-      <button data-v="site">Autre site</button>
+      <button data-v="point" class="active">Point on the map</button>
+      <button data-v="site">Another site</button>
     </div>
     <div id="link-rx-point">
       <div class="row">
-        <button id="btn-pick-rx">Choisir sur la carte</button>
+        <button id="btn-pick-rx">Pick on the map</button>
         <span id="rx-coords" class="muted mono">—</span>
       </div>
     </div>
     <div id="link-rx-site" hidden><select id="link-rx-sitesel"></select></div>
-    <label>Hauteur d'antenne RX (m)</label>
+    <label>RX antenna height (m)</label>
     <input type="number" id="link-rx-h" value="2" min="0.5" max="3000" step="0.5">
-    <button class="primary wide" id="btn-link">Calculer la liaison</button>
-    <p class="hint">Raccourci : <kbd>Maj</kbd> + clic sur la carte calcule une liaison depuis l'émetteur choisi.</p>
+    <button class="primary wide" id="btn-link">Compute the link</button>
+    <p class="hint">Shortcut: <kbd>Shift</kbd> + click on the map computes a link from the selected transmitter.</p>
     <div id="link-result"></div>
   </section>
 
   <!-- ============ COUVERTURE ============ -->
   <section class="tab" id="tab-coverage" hidden>
-    <label>Site émetteur</label>
+    <label>Transmitter site</label>
     <select id="cov-site"></select>
     <div class="grid2">
-      <div><label>Rayon (km)</label><input type="number" id="cov-radius" value="20" min="1" step="1"></div>
-      <div><label>Grille</label>
+      <div><label>Radius (km)</label><input type="number" id="cov-radius" value="20" min="1" step="1"></div>
+      <div><label>Grid</label>
         <select id="cov-ds">
           <option value="1">Native GLO-90 (3″)</option>
-          <option value="2">Aperçu ×2 (6″)</option>
-          <option value="4">Aperçu ×4 (12″)</option>
+          <option value="2">Preview ×2 (6″)</option>
+          <option value="4">Preview ×4 (12″)</option>
         </select>
       </div>
-      <div><label>Rendu</label>
-        <select id="cov-interp" title="Point le plus proche : un calcul ITM par pixel (rapide). Bilinéaire : ITM à tous les pas de chaque radiale puis interpolation (lissé, ~1,5× plus lent).">
-          <option value="nearest">Par pixel (rapide)</option>
-          <option value="bilinear">Bilinéaire (lissé)</option>
+      <div><label>Rendering</label>
+        <select id="cov-interp" title="Per pixel: one ITM computation per pixel, at the nearest radial point (fast). Bilinear: ITM at every step of every radial, then interpolation (smoother, about 1.5× slower).">
+          <option value="nearest">Per pixel (fast)</option>
+          <option value="bilinear">Bilinear (smooth)</option>
         </select>
       </div>
-      <div><label>Calcul ITM</label>
-        <select id="cov-fast" title="Exact : calcul de référence à chaque pixel. Quasi exact : horizons accélérés, même résultat (~1,4× plus rapide). Rapide : Δh recalculé tous les 50 pas et interpolé entre deux (~2,6× plus rapide, 99,7 % des pixels à 3 dB près).">
+      <div><label>ITM computation</label>
+        <select id="cov-fast" title="Exact: reference computation at every pixel. Near-exact: accelerated horizons, same result (about 1.4× faster). Fast: Δh recomputed every 50 steps and interpolated in between (2 to 3× faster, 99.7 % of pixels within 3 dB).">
           <option value="0">Exact</option>
-          <option value="1">Quasi exact (×1,4)</option>
-          <option value="50">Rapide, approché (×2,6)</option>
+          <option value="1">Near-exact (×1.4)</option>
+          <option value="50">Fast, approximate (×2.5)</option>
         </select>
       </div>
-      <div><label>Hauteur RX (m)</label><input type="number" id="cov-rx-h" value="2" min="0.5" step="0.5"></div>
-      <div><label>Grandeur</label>
+      <div><label>RX height (m)</label><input type="number" id="cov-rx-h" value="2" min="0.5" step="0.5"></div>
+      <div><label>Quantity</label>
         <select id="cov-output">
-          <option value="rx_power">Puissance reçue (dBm)</option>
-          <option value="field_strength">Champ (dBµV/m)</option>
-          <option value="path_loss">Affaiblissement (dB)</option>
+          <option value="rx_power">Received power (dBm)</option>
+          <option value="field_strength">Field strength (dBµV/m)</option>
+          <option value="path_loss">Path loss (dB)</option>
         </select>
       </div>
     </div>
     <div id="cov-estimate" class="hint"></div>
     <div class="row">
-      <button class="primary grow" id="btn-coverage">Calculer la couverture</button>
-      <button id="btn-cov-cancel" hidden>Annuler</button>
+      <button class="primary grow" id="btn-coverage">Compute coverage</button>
+      <button id="btn-cov-cancel" hidden>Cancel</button>
     </div>
-    <h3>Couches</h3>
-    <ul id="layer-list" class="cards"><li class="empty">Aucune couverture calculée.</li></ul>
+    <h3>Layers</h3>
+    <ul id="layer-list" class="cards"><li class="empty">No coverage computed yet.</li></ul>
   </section>
 
   <!-- ============ RADIO ============ -->
   <section class="tab" id="tab-radio" hidden>
-    <label>Préréglage de bande</label>
+    <label>Band preset</label>
     <select id="band-preset"></select>
     <div class="grid2">
-      <div><label>Fréquence (MHz)</label><input type="number" id="p-freq" min="20" max="20000" step="any"></div>
-      <div><label>Polarisation</label>
-        <select id="p-pol"><option value="vertical">Verticale</option><option value="horizontal">Horizontale</option></select>
+      <div><label>Frequency (MHz)</label><input type="number" id="p-freq" min="20" max="20000" step="any"></div>
+      <div><label>Polarization</label>
+        <select id="p-pol"><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select>
       </div>
     </div>
-    <label>Climat radio</label>
+    <label>Radio climate</label>
     <select id="p-climate">
-      <option value="continental_temperate">Continental tempéré</option>
-      <option value="maritime_temperate_over_land">Maritime tempéré (sur terre)</option>
-      <option value="maritime_temperate_over_sea">Maritime tempéré (sur mer)</option>
+      <option value="continental_temperate">Continental temperate</option>
+      <option value="maritime_temperate_over_land">Maritime temperate (over land)</option>
+      <option value="maritime_temperate_over_sea">Maritime temperate (over sea)</option>
       <option value="continental_subtropical">Continental subtropical</option>
       <option value="maritime_subtropical">Maritime subtropical</option>
-      <option value="desert">Désert</option>
-      <option value="equatorial">Équatorial</option>
+      <option value="desert">Desert</option>
+      <option value="equatorial">Equatorial</option>
     </select>
-    <label>Type de sol</label>
+    <label>Ground type</label>
     <select id="ground-preset">
-      <option value="15,0.005">Sol moyen (ε 15, σ 0,005)</option>
-      <option value="4,0.001">Sol pauvre / sec (ε 4, σ 0,001)</option>
-      <option value="25,0.02">Bon sol (ε 25, σ 0,02)</option>
-      <option value="81,0.01">Eau douce (ε 81, σ 0,01)</option>
-      <option value="81,5">Eau de mer (ε 81, σ 5)</option>
-      <option value="custom">Personnalisé</option>
+      <option value="15,0.005">Average ground (ε 15, σ 0.005)</option>
+      <option value="4,0.001">Poor / dry ground (ε 4, σ 0.001)</option>
+      <option value="25,0.02">Good ground (ε 25, σ 0.02)</option>
+      <option value="81,0.01">Fresh water (ε 81, σ 0.01)</option>
+      <option value="81,5">Sea water (ε 81, σ 5)</option>
+      <option value="custom">Custom</option>
     </select>
     <div class="grid2">
       <div><label>Gain RX (dBi)</label><input type="number" id="p-rxgain" step="0.1"></div>
-      <div><label>PIRE par défaut (dBm)</label><input type="number" id="p-eirp" step="0.1"></div>
+      <div><label>Default EIRP (dBm)</label><input type="number" id="p-eirp" step="0.1"></div>
     </div>
     <details>
-      <summary>Paramètres ITM avancés</summary>
+      <summary>Advanced ITM parameters</summary>
       <div class="grid2">
-        <div><label>Permittivité ε</label><input type="number" id="p-eps" step="any" min="1"></div>
-        <div><label>Conductivité σ (S/m)</label><input type="number" id="p-sigma" step="any" min="0"></div>
-        <div><label>Réfractivité N0</label><input type="number" id="p-n0" min="250" max="400" step="1"></div>
-        <div><label>Mode de variabilité</label>
+        <div><label>Permittivity ε</label><input type="number" id="p-eps" step="any" min="1"></div>
+        <div><label>Conductivity σ (S/m)</label><input type="number" id="p-sigma" step="any" min="0"></div>
+        <div><label>Refractivity N0</label><input type="number" id="p-n0" min="250" max="400" step="1"></div>
+        <div><label>Variability mode</label>
           <select id="p-mdvar">
-            <option value="12">Mobile, point à point (12)</option>
+            <option value="12">Mobile, point-to-point (12)</option>
             <option value="2">Mobile (2)</option>
-            <option value="3">Diffusion (3)</option>
-            <option value="13">Diffusion, point à point (13)</option>
-            <option value="0">Message unique (0)</option>
-            <option value="1">Accidentel (1)</option>
-            <option value="23">Diffusion, sans situation (23)</option>
+            <option value="3">Broadcast (3)</option>
+            <option value="13">Broadcast, point-to-point (13)</option>
+            <option value="0">Single message (0)</option>
+            <option value="1">Accidental (1)</option>
+            <option value="23">Broadcast, no situation (23)</option>
           </select>
         </div>
-        <div><label>% temps</label><input type="number" id="p-time" min="0.01" max="99.99" step="any"></div>
-        <div><label>% lieux</label><input type="number" id="p-location" min="0.01" max="99.99" step="any"></div>
+        <div><label>% time</label><input type="number" id="p-time" min="0.01" max="99.99" step="any"></div>
+        <div><label>% locations</label><input type="number" id="p-location" min="0.01" max="99.99" step="any"></div>
         <div><label>% situations</label><input type="number" id="p-situation" min="0.01" max="99.99" step="any"></div>
       </div>
-      <p class="hint">Avec le mode 12, la variabilité de lieu est supprimée et le % de lieux est ignoré.</p>
+      <p class="hint">With mode 12, location variability is removed and % locations is ignored.</p>
     </details>
-    <button id="btn-reset-radio" class="small">Réinitialiser</button>
+    <button id="btn-reset-radio" class="small">Reset</button>
 
-    <h3>Modèle numérique de terrain</h3>
-    <p class="hint">Les tuiles Copernicus GLO-90 (1°×1°, environ 6 Mo chacune) sont téléchargées
-      depuis le miroir OpenTopography puis gardées dans le cache du navigateur.
-      Vous pouvez aussi importer des tuiles déjà téléchargées (<span class="mono">Copernicus_DSM_*_30_*.tif</span>).</p>
+    <h3>Elevation model</h3>
+    <p class="hint">Copernicus GLO-90 tiles (1°×1°, about 6 MB each) are downloaded
+      from the OpenTopography mirror, then kept in the browser cache.
+      You can also import tiles you already have (<span class="mono">Copernicus_DSM_*_30_*.tif</span>).</p>
     <div id="dem-cache-info" class="hint mono"></div>
     <div class="row small">
-      <label class="button">Importer des tuiles<input type="file" id="dem-import" accept=".tif,.tiff,image/tiff" multiple hidden></label>
-      <button id="btn-dem-clear">Vider le cache</button>
+      <label class="button">Import tiles<input type="file" id="dem-import" accept=".tif,.tiff,image/tiff" multiple hidden></label>
+      <button id="btn-dem-clear">Clear cache</button>
     </div>
   </section>
 </aside>
@@ -180,9 +180,9 @@
   </div>
   <div id="profile-panel" hidden>
     <div class="ph">
-      <strong>Profil de terrain</strong>
-      <span class="muted" id="profile-legend">terrain (k = 4/3) · ligne de visée · 1ʳᵉ zone de Fresnel</span>
-      <button id="btn-profile-close" title="Fermer">✕</button>
+      <strong>Terrain profile</strong>
+      <span class="muted" id="profile-legend">terrain (k = 4/3) · line of sight · 1st Fresnel zone</span>
+      <button id="btn-profile-close" title="Close">✕</button>
     </div>
     <canvas id="profile"></canvas>
   </div>

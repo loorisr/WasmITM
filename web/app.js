@@ -1,5 +1,5 @@
-/* Interface web ITM — JavaScript sans dépendance (hors Leaflet), sans étape de build.
- * Version navigateur : les routes /v1/* sont servies localement par backend.js (WebAssembly). */
+/* ITM web UI — plain JavaScript (Leaflet only), no build step.
+ * Browser version: the /v1/* routes are served locally by backend.js (WebAssembly). */
 import { handle, POOL_SIZE } from './backend.js';
 import { importTile, cacheInfo, clearCache } from './tiles.js';
 
@@ -8,7 +8,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const STORE = 'itm-ui-v1';
-  const fmt = (v, d = 1) => (v == null || !isFinite(v)) ? '—' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmt = (v, d = 1) => (v == null || !isFinite(v)) ? '—' : v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   const num = (el) => parseFloat(el.value);
@@ -28,11 +28,11 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
 
   const SITE_COLORS = ['#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c', '#0891b2', '#be185d', '#4d7c0f'];
   const BANDS = [
-    ['FM broadcast (98 MHz)', 98, 'horizontal'], ['Aviation VHF (125 MHz)', 125], ['Radioamateur 2 m (145 MHz)', 145],
-    ['VHF marine (156,8 MHz)', 156.8], ['VHF professionnelle (160 MHz)', 160], ['TETRA (390 MHz)', 390],
-    ['Radioamateur 70 cm (433 MHz)', 433], ['PMR446 (446,1 MHz)', 446.1], ['TNT / DVB-T (600 MHz)', 600, 'horizontal'],
+    ['FM broadcast (98 MHz)', 98, 'horizontal'], ['Aviation VHF (125 MHz)', 125], ['Amateur 2 m (145 MHz)', 145],
+    ['Marine VHF (156.8 MHz)', 156.8], ['Professional VHF (160 MHz)', 160], ['TETRA (390 MHz)', 390],
+    ['Amateur 70 cm (433 MHz)', 433], ['PMR446 (446.1 MHz)', 446.1], ['DVB-T (600 MHz)', 600, 'horizontal'],
     ['LTE 800 (806 MHz)', 806], ['LoRa EU868 (868 MHz)', 868], ['LoRa US915 (915 MHz)', 915], ['GSM 900 (942 MHz)', 942],
-    ['GSM / LTE 1800 (1842 MHz)', 1842], ['UMTS / LTE 2100 (2140 MHz)', 2140], ['Wi-Fi 2,4 GHz (2437 MHz)', 2437],
+    ['GSM / LTE 1800 (1842 MHz)', 1842], ['UMTS / LTE 2100 (2140 MHz)', 2140], ['Wi-Fi 2.4 GHz (2437 MHz)', 2437],
     ['LTE 2600 (2655 MHz)', 2655], ['Wi-Fi 5 GHz (5500 MHz)', 5500],
   ];
   const DEFAULT_RADIO = {
@@ -40,12 +40,12 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
     n0: 301, mdvar: 12, time: 50, location: 50, situation: 50, rx_gain_dbi: 0, default_eirp_dbm: 30,
   };
   const QUANTITIES = {
-    rx_power: { label: 'Puissance reçue', unit: 'dBm', weak: -120, strong: -40 },
-    field_strength: { label: 'Champ', unit: 'dBµV/m', weak: 20, strong: 100 },
-    path_loss: { label: 'Affaiblissement', unit: 'dB', weak: 180, strong: 80 },
+    rx_power: { label: 'Received power', unit: 'dBm', weak: -120, strong: -40 },
+    field_strength: { label: 'Field strength', unit: 'dBµV/m', weak: 20, strong: 100 },
+    path_loss: { label: 'Path loss', unit: 'dB', weak: 180, strong: 80 },
   };
-  const MODE_FR = { line_of_sight: 'Visibilité directe (courbe ITM)', diffraction: 'Diffraction', troposcatter: 'Troposcatter', not_set: '—' };
-  const GEOM = { line_of_sight: ['Vue directe', 'ok'], single_horizon: ['Un obstacle', 'warn'], double_horizon: ['Deux horizons', 'bad'] };
+  const MODE_LABEL = { line_of_sight: 'Line of sight (ITM curve)', diffraction: 'Diffraction', troposcatter: 'Troposcatter', not_set: '—' };
+  const GEOM = { line_of_sight: ['Line of sight', 'ok'], single_horizon: ['One obstacle', 'warn'], double_horizon: ['Two horizons', 'bad'] };
 
   // ---------------------------------------------------------------- état persistant
   let state;
@@ -99,21 +99,21 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
   // ---------------------------------------------------------------- carte
   const map = L.map('map', { zoomControl: true }).setView(state.view.center, state.view.zoom);
   const bases = {
-    'OpenStreetMap': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© contributeurs OpenStreetMap' }),
-    'Relief (OpenTopoMap)': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenStreetMap, SRTM · style © OpenTopoMap (CC-BY-SA)' }),
+    'OpenStreetMap': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }),
+    'Terrain (OpenTopoMap)': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenStreetMap, SRTM · style © OpenTopoMap (CC-BY-SA)' }),
   };
   bases['OpenStreetMap'].addTo(map);
   L.control.layers(bases, null, { position: 'topright' }).addTo(map);
   L.control.scale({ imperial: false }).addTo(map);
-  map.attributionControl.addAttribution('MNE Copernicus GLO-90 © DLR/Airbus, ESA/UE, via <a href="https://opentopography.org">OpenTopography</a>');
+  map.attributionControl.addAttribution('DEM Copernicus GLO-90 © DLR/Airbus, ESA/EU, via <a href="https://opentopography.org">OpenTopography</a>');
   map.on('moveend', () => { const c = map.getCenter(); state.view = { center: [c.lat, c.lng], zoom: map.getZoom() }; save(); });
 
   function setMode(m) {
     mode = m;
     const b = $('#mode-banner');
     b.hidden = !m;
-    b.textContent = m === 'add-site' ? 'Cliquez sur la carte pour placer le site — Échap pour annuler'
-      : m === 'pick-rx' ? 'Cliquez sur la carte pour placer le récepteur — Échap pour annuler' : '';
+    b.textContent = m === 'add-site' ? 'Click on the map to place the site — Esc to cancel'
+      : m === 'pick-rx' ? 'Click on the map to place the receiver — Esc to cancel' : '';
     map.getContainer().classList.toggle('picking', !!m);
   }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') setMode(null); });
@@ -123,7 +123,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
     if (mode === 'add-site') { setMode(null); addSite(p); return; }
     if (mode === 'pick-rx') { setMode(null); setRxPoint(p); computeLink(); return; }
     if (e.originalEvent.shiftKey) {
-      if (!state.sites.length) { toast('Ajoutez d\'abord un site émetteur.'); return; }
+      if (!state.sites.length) { toast('Add a transmitter site first.'); return; }
       showTab('link'); setRxMode('point'); setRxPoint(p); computeLink();
     }
   });
@@ -161,7 +161,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
     const s = { id: uid(), name: `Site ${n + 1}`, lat: p.lat, lon: p.lon, height_m: 20, eirp_dbm: state.radio.default_eirp_dbm, color: SITE_COLORS[n % SITE_COLORS.length], ...extra };
     state.sites.push(s);
     save(); selectSite(s.id);
-    toast(`${s.name} ajouté.`, 'ok');
+    toast(`${s.name} added.`, 'ok');
   }
   function selectSite(id) {
     selectedSite = id;
@@ -172,7 +172,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
   }
   function deleteSite(id) {
     const s = state.sites.find(x => x.id === id);
-    if (!s || !confirm(`Supprimer « ${s.name} » ?`)) return;
+    if (!s || !confirm(`Delete “${s.name}”?`)) return;
     state.sites = state.sites.filter(x => x.id !== id);
     markers.get(id)?.remove(); markers.delete(id);
     save(); renderSites();
@@ -180,27 +180,27 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
   function renderSites() {
     const ul = $('#site-list');
     if (!state.sites.length) {
-      ul.innerHTML = '<li class="empty">Aucun site. Ajoutez un émetteur sur la carte.</li>';
+      ul.innerHTML = '<li class="empty">No sites. Add a transmitter on the map.</li>';
     } else {
       ul.innerHTML = state.sites.map(s => `
         <li data-id="${s.id}" class="${s.id === selectedSite ? 'selected' : ''}">
           <div class="card-head"><span class="swatch" style="background:${s.color}"></span>
-            <input class="name" data-f="name" value="${esc(s.name)}" aria-label="Nom du site"></div>
+            <input class="name" data-f="name" value="${esc(s.name)}" aria-label="Site name"></div>
           <div class="mono muted">${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}</div>
           <div class="card-fields">
-            <div><label>Hauteur (m)</label><input type="number" data-f="height_m" value="${s.height_m}" min="0.5" max="3000" step="0.5"></div>
-            <div><label>PIRE (dBm)</label><input type="number" data-f="eirp_dbm" value="${s.eirp_dbm}" step="0.1"></div>
-            <div><label>Couleur</label><input type="color" data-f="color" value="${s.color}"></div>
+            <div><label>Height (m)</label><input type="number" data-f="height_m" value="${s.height_m}" min="0.5" max="3000" step="0.5"></div>
+            <div><label>EIRP (dBm)</label><input type="number" data-f="eirp_dbm" value="${s.eirp_dbm}" step="0.1"></div>
+            <div><label>Colour</label><input type="color" data-f="color" value="${s.color}"></div>
           </div>
           <div class="card-actions small">
-            <button data-a="center">Centrer</button><button data-a="link">Liaison</button>
-            <button data-a="coverage">Couverture</button><button data-a="delete" class="danger">Supprimer</button>
+            <button data-a="center">Centre</button><button data-a="link">Link</button>
+            <button data-a="coverage">Coverage</button><button data-a="delete" class="danger">Delete</button>
           </div>
         </li>`).join('');
     }
     for (const sel of ['#link-tx', '#link-rx-sitesel', '#cov-site']) {
       const el = $(sel), prev = el.value;
-      el.innerHTML = state.sites.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('') || '<option value="">(aucun site)</option>';
+      el.innerHTML = state.sites.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('') || '<option value="">(no site)</option>';
       if (state.sites.some(s => s.id === prev)) el.value = prev;
       else if (selectedSite && sel !== '#link-rx-sitesel') el.value = selectedSite;
     }
@@ -227,7 +227,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
   });
   $('#btn-add-site').addEventListener('click', () => setMode(mode === 'add-site' ? null : 'add-site'));
   $('#btn-export-sites').addEventListener('click', () => {
-    download(new Blob([JSON.stringify({ format: 'itm-sites', version: 1, sites: state.sites, radio: state.radio }, null, 2)], { type: 'application/json' }), 'sites-itm.json');
+    download(new Blob([JSON.stringify({ format: 'itm-sites', version: 1, sites: state.sites, radio: state.radio }, null, 2)], { type: 'application/json' }), 'itm-sites.json');
   });
   $('#file-import').addEventListener('change', async e => {
     const f = e.target.files[0];
@@ -236,7 +236,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
     try {
       const j = JSON.parse(await f.text());
       const list = Array.isArray(j) ? j : j.sites;
-      if (!Array.isArray(list)) throw new Error('fichier sans liste "sites"');
+      if (!Array.isArray(list)) throw new Error('file has no "sites" list');
       let n = 0;
       for (const s of list) {
         if (!isFinite(s.lat) || !isFinite(s.lon)) continue;
@@ -247,11 +247,11 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
         });
         n++;
       }
-      if (j.radio && confirm('Le fichier contient aussi des paramètres radio. Les appliquer ?')) { state.radio = { ...DEFAULT_RADIO, ...j.radio }; loadRadioForm(); }
+      if (j.radio && confirm('The file also contains radio parameters. Apply them?')) { state.radio = { ...DEFAULT_RADIO, ...j.radio }; loadRadioForm(); }
       save(); state.sites.forEach(syncMarker); renderSites();
-      toast(`${n} site(s) importé(s).`, 'ok');
+      toast(`${n} site(s) imported.`, 'ok');
       if (n) map.fitBounds(L.latLngBounds(state.sites.map(s => [s.lat, s.lon])).pad(0.2));
-    } catch (err) { toast('Import impossible : ' + err.message, 'error'); }
+    } catch (err) { toast('Import failed: ' + err.message, 'error'); }
   });
 
   // ---------------------------------------------------------------- liaison
@@ -276,11 +276,11 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
 
   async function computeLink() {
     const tx = state.sites.find(s => s.id === $('#link-tx').value);
-    if (!tx) { toast('Choisissez un site émetteur (onglet Sites).', 'error'); return; }
+    if (!tx) { toast('Choose a transmitter site (Sites tab).', 'error'); return; }
     let rx;
     if (rxMode === 'site') {
       const s = state.sites.find(x => x.id === $('#link-rx-sitesel').value);
-      if (!s || s.id === tx.id) { toast('Choisissez un récepteur différent de l\'émetteur.', 'error'); return; }
+      if (!s || s.id === tx.id) { toast('Choose a receiver other than the transmitter.', 'error'); return; }
       rx = { lat: s.lat, lon: s.lon };
     } else {
       if (!rxPoint) { setMode('pick-rx'); return; }
@@ -290,7 +290,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
     const body = { ...radioParams(), tx: { lat: tx.lat, lon: tx.lon, height_m: tx.height_m }, rx: { ...rx, height_m: hr }, eirp_dbm: tx.eirp_dbm, include_profile: true };
     const btn = $('#btn-link');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Calcul…';
+    btn.innerHTML = '<span class="spinner"></span> Computing…';
     try {
       const j = await (await api('/v1/p2p', { method: 'POST', body: JSON.stringify(body) })).json();
       linkLine?.remove();
@@ -300,10 +300,10 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
       renderLinkResult(j, tx, clr);
       openProfile();
     } catch (err) {
-      toast('Liaison : ' + err.message, 'error');
+      toast('Link: ' + err.message, 'error');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Calculer la liaison';
+      btn.textContent = 'Compute the link';
     }
   }
   $('#btn-link').addEventListener('click', computeLink);
@@ -312,23 +312,23 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
     const [gLabel, gCls] = GEOM[j.path_geometry] || [j.path_geometry, ''];
     const fCls = clr.min >= 0.6 ? 'ok' : clr.min >= 0 ? 'warn' : 'bad';
     const head = j.rx_power_dbm != null
-      ? `<div class="muted">Puissance reçue</div><div class="v">${fmt(j.rx_power_dbm)} dBm</div><div class="muted">PIRE ${fmt(tx.eirp_dbm)} dBm · gain RX ${fmt(state.radio.rx_gain_dbi)} dBi</div>`
-      : `<div class="muted">Affaiblissement</div><div class="v">${fmt(j.path_loss_db)} dB</div>`;
+      ? `<div class="muted">Received power</div><div class="v">${fmt(j.rx_power_dbm)} dBm</div><div class="muted">EIRP ${fmt(tx.eirp_dbm)} dBm · RX gain ${fmt(state.radio.rx_gain_dbi)} dBi</div>`
+      : `<div class="muted">Path loss</div><div class="v">${fmt(j.path_loss_db)} dB</div>`;
     $('#link-result').innerHTML = `
       <div class="result">
         <div class="big">${head}</div>
         <table>
           <tr><td>Distance</td><td>${fmt(j.distance_km, 2)} km</td></tr>
-          <tr><td>Azimut</td><td>${fmt(j.bearing_deg)}°</td></tr>
-          <tr><td>Affaiblissement ITM</td><td>${fmt(j.path_loss_db)} dB</td></tr>
-          <tr><td>Espace libre</td><td>${fmt(j.free_space_loss_db)} dB</td></tr>
-          <tr><td>Pertes en excès</td><td>${fmt(j.excess_loss_db)} dB</td></tr>
-          <tr><td>Champ</td><td>${fmt(j.field_strength_dbuvm)} dBµV/m</td></tr>
-          <tr><td>Géométrie du trajet</td><td><span class="badge ${gCls}">${gLabel}</span></td></tr>
-          <tr><td>Dégagement Fresnel min.</td><td><span class="badge ${fCls}">${clr.min < 0 ? 'Obstrué' : fmt(clr.min * 100, 0) + ' % F1'}</span></td></tr>
-          <tr><td>Mode ITM</td><td>${MODE_FR[j.mode] || j.mode}</td></tr>
-          <tr><td>Altitude sol TX / RX</td><td>${fmt(j.tx_ground_m, 0)} / ${fmt(j.rx_ground_m, 0)} m</td></tr>
-          <tr><td>Irrégularité Δh</td><td>${fmt(j.intermediate.delta_h_m, 0)} m</td></tr>
+          <tr><td>Bearing</td><td>${fmt(j.bearing_deg)}°</td></tr>
+          <tr><td>ITM path loss</td><td>${fmt(j.path_loss_db)} dB</td></tr>
+          <tr><td>Free space</td><td>${fmt(j.free_space_loss_db)} dB</td></tr>
+          <tr><td>Excess loss</td><td>${fmt(j.excess_loss_db)} dB</td></tr>
+          <tr><td>Field strength</td><td>${fmt(j.field_strength_dbuvm)} dBµV/m</td></tr>
+          <tr><td>Path geometry</td><td><span class="badge ${gCls}">${gLabel}</span></td></tr>
+          <tr><td>Min. Fresnel clearance</td><td><span class="badge ${fCls}">${clr.min < 0 ? 'Obstructed' : fmt(clr.min * 100, 0) + ' % F1'}</span></td></tr>
+          <tr><td>ITM mode</td><td>${MODE_LABEL[j.mode] || j.mode}</td></tr>
+          <tr><td>TX / RX ground elevation</td><td>${fmt(j.tx_ground_m, 0)} / ${fmt(j.rx_ground_m, 0)} m</td></tr>
+          <tr><td>Terrain irregularity Δh</td><td>${fmt(j.intermediate.delta_h_m, 0)} m</td></tr>
         </table>
         ${j.warnings.messages.length ? `<div class="warnings">⚠ ${j.warnings.messages.map(esc).join('<br>⚠ ')}</div>` : ''}
       </div>`;
@@ -448,7 +448,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
       ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, H - pad.b); ctx.stroke();
       const clr = s.r1[i] > 0 ? (s.los[i] - s.ter[i]) / s.r1[i] * 100 : null;
-      const lines = [`${fmt(s.xs[i] / 1000, 2)} km`, `sol ${fmt(profile.elev[i], 0)} m`, `visée ${fmt(s.los[i], 0)} m`, clr == null ? '' : `F1 ${fmt(clr, 0)} %`].filter(Boolean);
+      const lines = [`${fmt(s.xs[i] / 1000, 2)} km`, `ground ${fmt(profile.elev[i], 0)} m`, `LOS ${fmt(s.los[i], 0)} m`, clr == null ? '' : `F1 ${fmt(clr, 0)} %`].filter(Boolean);
       const bw = 112, bh = lines.length * 15 + 8, bx = x + 8 + bw > W ? x - bw - 8 : x + 8;
       ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.strokeStyle = '#dfe3e8';
       ctx.fillRect(bx, pad.t + 4, bw, bh); ctx.strokeRect(bx, pad.t + 4, bw, bh);
@@ -490,17 +490,17 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
     const site = state.sites.find(s => s.id === $('#cov-site').value);
     const el = $('#cov-estimate'), btn = $('#btn-coverage');
     let err = '';
-    if (!site) err = 'Ajoutez d\'abord un site.';
-    else if (!(R > 0) || R / 1000 > lim.max_radius_km) err = `Rayon : 1 à ${lim.max_radius_km} km.`;
+    if (!site) err = 'Add a site first.';
+    else if (!(R > 0) || R / 1000 > lim.max_radius_km) err = `Radius: 1 to ${lim.max_radius_km} km.`;
     const g = site && !err ? gridGeometry(site.lat, R, ds) : null;
-    if (!err && Math.max(g.w, g.h) > lim.max_grid_side) err = `Grille trop grande (${g.w} × ${g.h} px, max ${lim.max_grid_side}). Réduisez le rayon ou choisissez un aperçu.`;
+    if (!err && Math.max(g.w, g.h) > lim.max_grid_side) err = `Grid too large (${g.w} × ${g.h} px, max ${lim.max_grid_side}). Reduce the radius or pick a preview grid.`;
     if (err) { el.textContent = err; el.style.color = 'var(--danger)'; btn.disabled = true; return; }
     // Bilinéaire : ITM à tous les pas de chaque radiale. Par pixel : au plus un appel par
     // pixel du disque (un peu moins en bordure, où les radiales sont plus serrées que les pixels).
     const allSteps = g.radials * (g.steps - 1);
     const calls = $('#cov-interp').value === 'bilinear' ? allSteps : Math.min(allSteps, Math.PI * R * R / (g.dx * g.dy));
     el.style.color = '';
-    el.textContent = `Pixel ${fmt(g.dy, 0)} × ${fmt(g.dx, 0)} m · grille ${g.w} × ${g.h} px · ${g.radials} radiales · ~${calls >= 1e6 ? fmt(calls / 1e6, 1) + ' M' : fmt(calls / 1e3, 0) + ' k'} appels ITM`;
+    el.textContent = `Pixel ${fmt(g.dy, 0)} × ${fmt(g.dx, 0)} m · grid ${g.w} × ${g.h} px · ${g.radials} radials · ~${calls >= 1e6 ? fmt(calls / 1e6, 1) + ' M' : fmt(calls / 1e3, 0) + ' k'} ITM calls`;
     btn.disabled = !!covAbort;
   }
   ['#cov-radius', '#cov-ds', '#cov-site', '#cov-interp'].forEach(s => $(s).addEventListener('input', updateEstimate));
@@ -553,12 +553,12 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
     const btn = $('#btn-coverage'), t0 = performance.now();
     btn.disabled = true;
     $('#btn-cov-cancel').hidden = false;
-    let progress = 'Calcul…';
+    let progress = 'Computing…';
     const tick = setInterval(() => { btn.innerHTML = `<span class="spinner"></span> ${progress} · ${((performance.now() - t0) / 1000).toFixed(0)} s`; }, 250);
     try {
       const onProgress = p => {
         progress = p.phase === 'tiles'
-          ? `Tuiles ${p.done}/${p.total}${p.downloads ? ` (${p.downloads} téléch.)` : ''}`
+          ? `Tiles ${p.done}/${p.total}${p.downloads ? ` (${p.downloads} downloaded)` : ''}`
           : `ITM ${Math.round(100 * p.done / Math.max(1, p.total))} %`;
       };
       const r = await api('/v1/coverage', { method: 'POST', body: JSON.stringify(body), signal: covAbort.signal, onProgress });
@@ -566,25 +566,25 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
       const W = +r.headers.get('x-width'), H = +r.headers.get('x-height');
       const stats = JSON.parse(r.headers.get('x-coverage-stats') || '{}');
       const data = new Float32Array(await r.arrayBuffer());
-      if (data.length !== W * H) throw new Error('réponse incomplète');
+      if (data.length !== W * H) throw new Error('incomplete response');
       let min = Infinity, max = -Infinity;
       for (const v of data) if (v === v) { if (v < min) min = v; if (v > max) max = v; }
       const ly = {
-        id: uid(), name: `${site.name} · ${fmt(state.radio.frequency_mhz, 1)} MHz · ${body.radius_km} km${body.downsample > 1 ? ' · aperçu ×' + body.downsample : ''}`, site: site.name, color: site.color,
+        id: uid(), name: `${site.name} · ${fmt(state.radio.frequency_mhz, 1)} MHz · ${body.radius_km} km${body.downsample > 1 ? ' · preview ×' + body.downsample : ''}`, site: site.name, color: site.color,
         req: body, quantity: output, unit: q.unit, bounds: { west, south, east, north }, width: W, height: H, data,
         weak: q.weak, strong: q.strong, opacity: 0.7, visible: true, min, max, stats, secs: (performance.now() - t0) / 1000,
       };
       layers.unshift(ly);
       renderLayer(ly);
       renderLayers();
-      toast(`Couverture calculée : ${fmt(stats.itm_calls / 1e6, 2)} M appels ITM en ${fmt(ly.secs, 1)} s.`, 'ok');
+      toast(`Coverage computed: ${fmt(stats.itm_calls / 1e6, 2)} M ITM calls in ${fmt(ly.secs, 1)} s.`, 'ok');
     } catch (err) {
-      if (err.name === 'AbortError') toast('Calcul annulé.');
-      else toast('Couverture : ' + err.message, 'error');
+      if (err.name === 'AbortError') toast('Computation cancelled.');
+      else toast('Coverage: ' + err.message, 'error');
     } finally {
       clearInterval(tick);
       covAbort = null;
-      btn.textContent = 'Calculer la couverture';
+      btn.textContent = 'Compute coverage';
       $('#btn-cov-cancel').hidden = true;
       updateEstimate();
     }
@@ -594,21 +594,21 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
 
   function renderLayers() {
     const ul = $('#layer-list');
-    if (!layers.length) { ul.innerHTML = '<li class="empty">Aucune couverture calculée.</li>'; return; }
+    if (!layers.length) { ul.innerHTML = '<li class="empty">No coverage computed yet.</li>'; return; }
     ul.innerHTML = layers.map(ly => `
       <li data-id="${ly.id}">
-        <div class="card-head"><input type="checkbox" data-a="visible" ${ly.visible ? 'checked' : ''} title="Afficher">
+        <div class="card-head"><input type="checkbox" data-a="visible" ${ly.visible ? 'checked' : ''} title="Show">
           <span class="swatch" style="background:${ly.color}"></span><strong>${esc(ly.name)}</strong></div>
         <div class="legend" style="background:${GRADIENT}"></div>
         <div class="legend-labels"><span>${fmt(ly.weak, 0)}</span><span>${QUANTITIES[ly.quantity].label} (${ly.unit})</span><span>${fmt(ly.strong, 0)}</span></div>
         <div class="layer-ctrl">
-          <span>Opacité</span><input type="range" data-a="opacity" min="0" max="1" step="0.05" value="${ly.opacity}">
-          <span>Palette</span><div class="pair"><input type="number" data-a="weak" value="${ly.weak}" step="1" title="Valeur basse (en dessous : transparent)"><input type="number" data-a="strong" value="${ly.strong}" step="1" title="Valeur haute"></div>
+          <span>Opacity</span><input type="range" data-a="opacity" min="0" max="1" step="0.05" value="${ly.opacity}">
+          <span>Palette</span><div class="pair"><input type="number" data-a="weak" value="${ly.weak}" step="1" title="Low value (below: transparent)"><input type="number" data-a="strong" value="${ly.strong}" step="1" title="High value"></div>
         </div>
-        <div class="hint">Valeurs ${fmt(ly.min, 1)} à ${fmt(ly.max, 1)} ${ly.unit} · ${ly.width}×${ly.height} px · ${fmt(ly.secs, 1)} s</div>
+        <div class="hint">Values ${fmt(ly.min, 1)} to ${fmt(ly.max, 1)} ${ly.unit} · ${ly.width}×${ly.height} px · ${fmt(ly.secs, 1)} s</div>
         <div class="card-actions small">
-          <button data-a="zoom">Zoom</button><button data-a="geotiff">GeoTIFF</button><button data-a="png" title="Rendu affiché (Web Mercator)">PNG</button>
-          <button data-a="delete" class="danger">Supprimer</button>
+          <button data-a="zoom">Zoom</button><button data-a="geotiff">GeoTIFF</button><button data-a="png" title="Displayed rendering (Web Mercator)">PNG</button>
+          <button data-a="delete" class="danger">Delete</button>
         </div>
       </li>`).join('');
   }
@@ -642,13 +642,13 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
       layers.splice(layers.indexOf(ly), 1);
       renderLayers();
     }
-    if (a === 'png') ly.canvas.toBlob(bl => download(bl, `couverture_${ly.site}_${ly.quantity}.png`));
+    if (a === 'png') ly.canvas.toBlob(bl => download(bl, `coverage_${ly.site}_${ly.quantity}.png`));
     if (a === 'geotiff') {
       e.target.disabled = true;
       e.target.innerHTML = '<span class="spinner" style="border-color:#ccc;border-top-color:#2563eb"></span>';
       try {
         const r = await api('/v1/coverage', { method: 'POST', body: JSON.stringify({ ...ly.req, format: 'geotiff' }) });
-        download(await r.blob(), `couverture_${ly.site}_${ly.quantity}_${ly.req.frequency_mhz}MHz.tif`);
+        download(await r.blob(), `coverage_${ly.site}_${ly.quantity}_${ly.req.frequency_mhz}MHz.tif`);
       } catch (err) { toast('GeoTIFF : ' + err.message, 'error'); }
       e.target.disabled = false;
       e.target.textContent = 'GeoTIFF';
@@ -682,7 +682,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
       try {
         const r = await api(`/v1/elevation?lat=${ll.lat}&lon=${ll.lng}`, { signal: elevCtrl.signal });
         const j = await r.json();
-        if (ll === lastMove && j.elevation_m != null) $('#st-elev').textContent = `· alt. ${fmt(j.elevation_m, 0)} m`;
+        if (ll === lastMove && j.elevation_m != null) $('#st-elev').textContent = `· elev. ${fmt(j.elevation_m, 0)} m`;
       } catch { }
     }, 300);
   });
@@ -691,7 +691,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
   const RF = { '#p-freq': 'frequency_mhz', '#p-pol': 'polarization', '#p-climate': 'climate', '#p-eps': 'epsilon', '#p-sigma': 'sigma',
     '#p-n0': 'n0', '#p-mdvar': 'mdvar', '#p-time': 'time', '#p-location': 'location', '#p-situation': 'situation',
     '#p-rxgain': 'rx_gain_dbi', '#p-eirp': 'default_eirp_dbm' };
-  $('#band-preset').innerHTML = '<option value="">— Choisir —</option>' + BANDS.map((b, i) => `<option value="${i}">${b[0]}</option>`).join('');
+  $('#band-preset').innerHTML = '<option value="">— Choose —</option>' + BANDS.map((b, i) => `<option value="${i}">${b[0]}</option>`).join('');
   function loadRadioForm() {
     for (const [sel, k] of Object.entries(RF)) $(sel).value = state.radio[k];
     const g = `${state.radio.epsilon},${state.radio.sigma}`;
@@ -734,14 +734,14 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
     $('#version').textContent = `v${j.version} · WebAssembly · ${POOL_SIZE} workers`;
     $('#cov-radius').max = j.limits.max_radius_km;
     updateEstimate();
-  }).catch(e => toast('Module WebAssembly indisponible : ' + e.message, 'error'));
+  }).catch(e => toast('WebAssembly module unavailable: ' + e.message, 'error'));
 
   // ---------------------------------------------------------------- MNE (cache, import)
   async function showDemCache() {
     try {
       const c = await cacheInfo();
-      $('#dem-cache-info').textContent = `Cache : ${c.tiles} tuile${c.tiles > 1 ? 's' : ''}, ${fmt(c.bytes / 1e6, 0)} Mo`;
-    } catch { $('#dem-cache-info').textContent = 'Cache du navigateur indisponible.'; }
+      $('#dem-cache-info').textContent = `Cache: ${c.tiles} tile${c.tiles === 1 ? '' : 's'}, ${fmt(c.bytes / 1e6, 0)} MB`;
+    } catch { $('#dem-cache-info').textContent = 'Browser cache unavailable.'; }
   }
   $('#dem-import').addEventListener('change', async e => {
     let ok = 0;
@@ -751,10 +751,10 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
         const [key] = JSON.parse(await handleTileKey(buf));
         await importTile(key.name, buf);
         ok++;
-      } catch (err) { toast(`${f.name} : ${err.message}`, 'error'); }
+      } catch (err) { toast(`${f.name}: ${err.message}`, 'error'); }
     }
     e.target.value = '';
-    if (ok) toast(`${ok} tuile${ok > 1 ? 's' : ''} importée${ok > 1 ? 's' : ''}.`, 'ok');
+    if (ok) toast(`${ok} tile${ok === 1 ? '' : 's'} imported.`, 'ok');
     showDemCache();
   });
   async function handleTileKey(buf) {
@@ -763,7 +763,7 @@ import { importTile, cacheInfo, clearCache } from './tiles.js';
   }
   $('#btn-dem-clear').addEventListener('click', async () => {
     await clearCache();
-    toast('Cache des tuiles vidé.');
+    toast('Tile cache cleared.');
     showDemCache();
   });
   showDemCache();

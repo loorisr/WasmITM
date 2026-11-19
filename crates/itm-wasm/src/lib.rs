@@ -86,12 +86,12 @@ fn check_point(p: LatLon, what: &str) -> Result<(), AppError> {
         || !p.lon.is_finite()
     {
         return Err(AppError::bad_request(format!(
-            "{what} : coordonnées invalides"
+            "{what}: invalid coordinates"
         )));
     }
     if p.lat.abs() > 85.0 {
         return Err(AppError::bad_request(format!(
-            "{what} : latitude au-delà de ±85° non supportée"
+            "{what}: latitudes beyond ±85° are not supported"
         )));
     }
     Ok(())
@@ -101,7 +101,7 @@ fn keys_checked(bbox: (f64, f64, f64, f64), max_tiles: usize) -> Result<Vec<Tile
     let keys = keys_for_bbox(bbox.0, bbox.1, bbox.2, bbox.3);
     if keys.len() > max_tiles {
         return Err(AppError::bad_request(format!(
-            "zone trop grande : {} tuiles nécessaires (max {max_tiles})",
+            "area too large: {} tiles needed (max {max_tiles})",
             keys.len()
         )));
     }
@@ -167,12 +167,12 @@ pub fn info() -> String {
             "max_radials": l.max_radials,
         },
         "grid": {
-            "kind": "GLO-90 native (centres de pixels Copernicus)",
+            "kind": "native GLO-90 (Copernicus pixel centres)",
             "dlat_arcsec": 3.0,
             "dlon_arcsec_by_abs_lat": [[0, 3.0], [50, 4.5], [60, 6.0], [70, 9.0], [80, 15.0], [85, 30.0]],
             "arcsec3_m": coverage::ARCSEC3_M,
         },
-        "dem": { "source": "Copernicus GLO-90 (miroir OpenTopography)", "download": true }
+        "dem": { "source": "Copernicus GLO-90 (OpenTopography mirror)", "download": true }
     })
     .to_string()
 }
@@ -193,7 +193,7 @@ struct ElevationBody {
 fn elevation_bbox(b: &ElevationBody) -> Result<(f64, f64, f64, f64), AppError> {
     let max = LIMITS.max_elevation_points;
     if b.points.is_empty() || b.points.len() > max {
-        return Err(AppError::bad_request(format!("1 à {max} points")));
+        return Err(AppError::bad_request(format!("1 to {max} points")));
     }
     for p in &b.points {
         check_point(
@@ -322,9 +322,7 @@ fn p2p_check(body: &str) -> Result<P2pChecked, AppError> {
     let params = req.itm.to_params(req.tx.height_m, req.rx.height_m)?;
     let d = geo::distance(a, b);
     if d < 100.0 {
-        return Err(AppError::bad_request(
-            "distance tx-rx trop courte (< 100 m)",
-        ));
+        return Err(AppError::bad_request("tx-rx distance too short (< 100 m)"));
     }
     if d > LIMITS.max_p2p_km * 1000.0 {
         return Err(AppError::bad_request(format!(
@@ -487,32 +485,32 @@ fn coverage_check(body: &str) -> Result<(CoverageRequest, CoverageSpec), AppErro
     let lim = &LIMITS;
     if !(req.radius_km > 0.0 && req.radius_km <= lim.max_radius_km) {
         return Err(AppError::bad_request(format!(
-            "radius_km doit être dans ]0, {}]",
+            "radius_km must be in (0, {}]",
             lim.max_radius_km
         )));
     }
     if !(1..=8).contains(&req.downsample) {
         return Err(AppError::bad_request(
-            "downsample doit être entre 1 (natif GLO-90) et 8",
+            "downsample must be between 1 (native GLO-90) and 8",
         ));
     }
     let g = coverage::grid_geometry(tx, req.radius_km * 1000.0, req.downsample, lim.max_radials);
     if g.width.max(g.height) > lim.max_grid_side {
         return Err(AppError::bad_request(format!(
-            "grille trop grande ({}x{}, max {2}x{2}) : réduire radius_km ou utiliser downsample",
+            "grid too large ({}x{}, max {2}x{2}): reduce radius_km or use downsample",
             g.width, g.height, lim.max_grid_side
         )));
     }
     if req.output != Quantity::PathLoss && req.budget.eirp_dbm.is_none() {
         return Err(AppError::bad_request(
-            "eirp_dbm est requis pour rx_power et field_strength",
+            "eirp_dbm is required for rx_power and field_strength",
         ));
     }
     let params = req.itm.to_params(req.tx.height_m, req.rx_height_m)?;
     let fast = req.fast.stride();
     if fast > 100_000 {
         return Err(AppError::bad_request(
-            "fast doit être un booléen ou un entier entre 0 et 100000",
+            "fast must be a boolean or an integer between 0 and 100000",
         ));
     }
     let spec = CoverageSpec {
@@ -588,7 +586,7 @@ pub fn coverage_radials(body: &str, needed: &[u8], j0: usize, j1: usize) -> JsRe
             coverage::grid_geometry(spec.tx, spec.radius_m, spec.downsample, spec.max_radials);
         let n_steps = ((spec.radius_m / geom.step_m).ceil() as usize).max(2);
         if !needed.is_empty() && needed.len() != geom.n_radials * (n_steps + 1) {
-            return Err(AppError::internal("masque de points polaires incohérent"));
+            return Err(AppError::internal("inconsistent polar point mask"));
         }
         let (out, calls, errors) =
             ST.with_borrow(|s| coverage::radials(&s.tiles, &spec, &geom, n_steps, needed, j0, j1));
@@ -619,11 +617,11 @@ pub fn coverage_finish(
         let cov = ST.with_borrow_mut(|s| s.cov.take());
         let cov = match cov {
             Some(c) if c.body == body => c,
-            _ => return Err(AppError::internal("pas de plan pour cette couverture")),
+            _ => return Err(AppError::internal("no plan for this coverage")),
         };
         let p = &cov.plan;
         if polar.len() != p.geom.n_radials * p.nk {
-            return Err(AppError::internal("taille du tableau polaire incohérente"));
+            return Err(AppError::internal("inconsistent polar array size"));
         }
         let mut grid = coverage::assemble(&cov.spec, p, polar);
         let mut stats = coverage::stats(&cov.spec, p, itm_calls as u64, itm_errors as u64);
@@ -683,9 +681,7 @@ pub fn grid_geotiff(
     data: Vec<f32>,
 ) -> JsResult<Vec<u8>> {
     if data.len() != width * height {
-        return Err(js_err(AppError::bad_request(
-            "taille de grille incohérente",
-        )));
+        return Err(js_err(AppError::bad_request("inconsistent grid size")));
     }
     let g = coverage::Grid {
         width,
@@ -696,5 +692,5 @@ pub fn grid_geotiff(
         dlat,
         data,
     };
-    raster_out::grid_geotiff(&g).map_err(|e| js_err(AppError::internal(format!("GeoTIFF : {e}"))))
+    raster_out::grid_geotiff(&g).map_err(|e| js_err(AppError::internal(format!("GeoTIFF: {e}"))))
 }
